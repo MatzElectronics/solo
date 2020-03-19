@@ -3,6 +3,14 @@
 
 <head>
     <style>
+        html, body {
+            background-color: white;
+            font-family: Arimo, sans-serif;
+            margin: 10px;
+            padding:0;
+            height: 100%;
+        }
+
         #graphing-console {
             height: 500px;
             width: 600px;
@@ -53,25 +61,25 @@
     <script src="../src/lib/FileSaver.min.js"></script>
     <script src="../src/propgraph.js"></script>
     <script>
-        var output = '';
+        let output = '';
 
-        var values = [0, 0, 0, 0, 0, 0];
+        let values = [0, 0, 0, 0, 0, 0];
 
-        var dataOut = null;
-        var streamer = null;
-        var clockRun = null;
-        var timeMark = Math.floor(Math.random() * 65535 + 0.5);
+        let dataOut = null;
+        let streamer = null;
+        let clockRun = null;
+        let timeMark = Math.floor(Math.random() * 65535 + 0.5);
 
         function runDataGenerator() {
-            var intervalMilliseconds = 250;
-            var intervalCNTsimulator = intervalMilliseconds * 65535 / 60000;
+            let intervalMilliseconds = 250;
+            let intervalCNTsimulator = intervalMilliseconds * 65535 / 60000;
 
             dataOut = setInterval(function () {
                 timeMark += intervalCNTsimulator;
                 if (timeMark > 65535) {
                     timeMark -= 65535;
                 }
-                for (var i = 0; i < 6; i++) {
+                for (let i = 0; i < 6; i++) {
                     values[i] += Math.floor((Math.random() * 4 - 1.5));
                 }
                 output += timeMark + ',' + values.join(',') + '\n';
@@ -79,8 +87,8 @@
             }, intervalMilliseconds);
 
             streamer = setInterval(function () {
-                var outElement = document.getElementById('output')
-                var chunk = Math.floor(Math.random() * (outElement.value.length / 2) + 1);
+                let outElement = document.getElementById('output')
+                let chunk = Math.floor(Math.random() * (outElement.value.length / 2) + 1);
                 PropGraph.display(output.slice(0, chunk));
                 output = output.substr(chunk);
                 outElement.value = output;
@@ -88,8 +96,8 @@
         }
 
         function runTheClock() {
-            var intervalMilliseconds = 250;
-            var intervalCNTsimulator = intervalMilliseconds * 65535 / 60000;
+            let intervalMilliseconds = 250;
+            let intervalCNTsimulator = intervalMilliseconds * 65535 / 60000;
 
             clockRun = setInterval(function () {
                 timeMark += intervalCNTsimulator;
@@ -116,42 +124,72 @@
             }
         }
 
+        function setGraphSettings() {
+                let graphSetups = {
+                type: document.getElementById('graph-type').value || 'AUTO',
+                yMin: document.getElementById('y-min').value || '0',
+                yMax: document.getElementById('y-max').value || '0',
+                xMin: document.getElementById('x-min').value || '0',
+                xMax: document.getElementById('x-max').value || '0',
+                visibleDuration: document.getElementById('duration').value || '40',
+                labels: ['apples', 'oranges', 'grapes', 'strawberries', 'raspberries', 'lemons'],
+            }
 
-
+            let graphElement = document.getElementById('graphing-console');
+            PropGraph.setup(graphSetups, graphElement, function() {PropGraph.start();});
+        }
     </script>
 </head>
 
 <body>
 
+    <h2>Unit test for propgraph.js</h2>
+    To simulate calls to propgraph functions, the following order must be observed to startup the graph:<br>
+    <ul>
+        <li>Choose the graph type, and if applicable, fixed setings for the graph's axes.</li>
+        <li>Start the data stream simulator by clicking "Start/Stop".</li>
+        <li>Click "Start" to instantiate the graph</li>
+        <li><b>Do NOT click "Start" again</b> until after "Stop" has been used to destroy the graph!</li>
+    </ul>
+    <br>
+    Now, you can test the following:<br>
+    <ul>
+        <li>Starting/Stopping the data stream</li>
+        <li>Play, Pause, Clear</li>
+        <li>Downloading</li>
+        <li>Stopping the graph (which then allows the startup procedure to be followed again).</li>
+    </ul>
+    <hr>
+    Type <select id="graph-type">
+        <option value="AUTO">Time Series: autoscaling</option>
+        <option value="FIXED">Time Series: fixed axes</option>
+        <option value="AUTOXY">Scatter Plot: autoscaling</option>
+        <option value="FIXEDXY">Scatter Plot: fixed axes</option>
+    </select>
+    &nbsp;&nbsp;&nbsp;&nbsp;
+    &nbsp;&nbsp;X min <input id="x-min" value="-50" size="3">
+    &nbsp;&nbsp;X max <input id="x-max" value="50" size="3">
+    &nbsp;&nbsp;Y min <input id="y-min" value="-50" size="3">
+    &nbsp;&nbsp;Y max <input id="y-max" value="50" size="3">
+    &nbsp;&nbsp;Duration <input id="duration" value="40" size="3">
+    <hr>
+    Simulated data streamer:
     <textarea id="output"></textarea>
     <button onclick="startStop();">Stop/Start</button>
+    <hr>
+    <button onclick="setGraphSettings();">Start</button>
+    <hr>
     <div id="graphing-console"></div>
 
-    <button onclick="PropGraph.start();">Start</button>
     <button onclick="PropGraph.play();">Play</button>
     <button onclick="PropGraph.pause();">Pause</button>
-    <button onclick="PropGraph.stop();">Stop</button>
     <button onclick="PropGraph.clear();">Clear</button>
-    <br><br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
     <button onclick="PropGraph.exportCSV(function(theBlob){saveAs(theBlob, 'br-graph.csv')});">Download CSV</button>
     <button onclick="PropGraph.exportPNG(function(theBlob){saveAs(theBlob, 'br-graph.png')});">Download PNG</button>
+    <hr>
+    <button onclick="PropGraph.stop(); PropGraph.destroy()">Stop</button>
 
-
-    <script>
-        let graphSetups = {
-            type: 'AUTO',
-            yMin: '0',
-            yMax: '0',
-            xMin: '0',
-            xMax: '0',
-            visibleDuration: '40',
-            labels: ['apples', 'oranges', 'grapes', 'strawberries', 'raspberries', 'lemons'],
-        }
-        let graphElement = document.getElementById('graphing-console');
-
-        PropGraph.setup(graphSetups, graphElement);
-
-    </script>
 </body>
 
 </html>

@@ -22,17 +22,7 @@
 
 
 
-/**
- * Graph system settings
- *
- * @type {{graph_type: string, fullWidth: boolean, showPoint: boolean, refreshRate: number, axisX: {onlyInteger: boolean, type: *}, sampleTotal: number}}
- */
-var graph_options = {
-    showPoint: false,
-    fullWidth: true,
-};
-
-var PropGraph = {
+let PropGraph = {
     chartObject: null,
     elements: {
         container: null,
@@ -48,37 +38,7 @@ var PropGraph = {
         type: 'AUTO'    
     },
     chartType: 'line',
-    chartOptions: {
-        responsive: false,
-        scales: {
-            xAxes: [{
-                type: 'linear', 
-                display: true,
-                scaleLabel: {
-                    display: true,
-                    labelString: 'Time (seconds)' 
-                },
-            }], 
-            yAxes: [{ // and your y axis customization as you see fit...
-                type: 'linear',
-                display: true,
-                scaleLabel: {
-                    display: false,
-                }
-            }],
-        },
-        legend: {
-            display: false,
-        },
-        animation: {
-            duration: 0 // general animation time
-        },
-        responsiveAnimationDuration: 0, // animation duration after a resize
-        tooltips: {
-            enabled: false,   // diable tooltips for the graph
-        },
-        events: [],  // disable events for the graph
-    },
+    chartOptions: null,
     flags: {
         dataReady: false,
         isAtStart: false,
@@ -97,7 +57,9 @@ var PropGraph = {
     },
     intervalId: null,
 
-    setup: function(settings, elem) {
+    setup: function(settings, elem, callback) {
+        let oldChartType = this.chartType;
+
         if (elem) {
             this.elements.container = elem;
 
@@ -125,27 +87,59 @@ var PropGraph = {
         }
 
         if (settings) {
+            this.chartOptions = {
+                responsive: false,
+                scales: {
+                    xAxes: [{
+                        type: 'linear', 
+                        display: true,
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Time (seconds)' 
+                        },
+                    }], 
+                    yAxes: [{ // and your y axis customization as you see fit...
+                        type: 'linear',
+                        display: true,
+                        scaleLabel: {
+                            display: false,
+                        }
+                    }],
+                },
+                legend: {
+                    display: false,
+                },
+                animation: {
+                    duration: 0 // general animation time
+                },
+                responsiveAnimationDuration: 0, // animation duration after a resize
+                tooltips: {
+                    enabled: false,   // diable tooltips for the graph
+                },
+                events: [],  // disable events for the graph
+            }
+
             if (settings.type) {
                 this.settings.type = settings.type;
 
-                if (settings.yMin || settings.yMax) {
-                    this.chartOptions.scales.yAxes[0].min = Number(settings.yMin || '0');
-                    this.chartOptions.scales.yAxes[0].max = Number(settings.yMax || '100');
+                if (this.settings.type.indexOf('FIXED') > -1) {
+                    this.chartOptions.scales.yAxes[0].ticks = {};
+                    this.chartOptions.scales.yAxes[0].ticks.min = Number(settings.yMin || '0');
+                    this.chartOptions.scales.yAxes[0].ticks.max = Number(settings.yMax || '100');
                 } else {
-                    delete this.chartOptions.scales.yAxes[0].min;
-                    delete this.chartOptions.scales.yAxes[0].max;
+                    delete this.chartOptions.scales.yAxes[0].ticks;
                 }
 
                 this.chartType = 'line';
                 this.chartOptions.scales.xAxes[0].scaleLabel.display = true;  // show x-axis label
 
                 if (this.settings.type === 'AUTOXY' || this.settings.type === 'FIXEDXY') {
-                    if (settings.xMin || settings.xMax) {
-                        this.chartOptions.scales.xAxes[0].min = Number(settings.yMin || '0');
-                        this.chartOptions.scales.xAxes[0].max = Number(settings.yMax || '100');
+                    if (this.settings.type === 'FIXEDXY') {
+                        this.chartOptions.scales.xAxes[0].ticks = {};
+                        this.chartOptions.scales.xAxes[0].ticks.min = Number(settings.xMin || '0');
+                        this.chartOptions.scales.xAxes[0].ticks.max = Number(settings.xMax || '100');
                     } else {
-                        delete this.chartOptions.scales.xAxes[0].min;
-                        delete this.chartOptions.scales.xAxes[0].max;
+                        delete this.chartOptions.scales.xAxes[0].ticks;
                     }
                     this.chartType = 'scatter';
                     this.chartOptions.scales.xAxes[0].scaleLabel.display = false;  // hide x-axis label
@@ -165,13 +159,17 @@ var PropGraph = {
         this.getColorsFromCss();
             
         this.data = {datasets: []}
+
         for (let i = 0; i < 10; i++) {
             this.data.datasets[i] = {
                 borderColor: this.settings.lineColors[i],
-                backgroundColor: 'rgba(0,0,0,0)',
                 borderWidth: 1,
-                radius: 0.5,
+                radius: 1.5,
                 data: []
+            }
+            if (this.chartType === 'line') {
+                this.data.datasets[i].backgroundColor = 'rgba(0,0,0,0)',
+                this.data.datasets[i].radius = 0.5
             }
         }
 
@@ -181,19 +179,31 @@ var PropGraph = {
                 data: this.data,
                 options: this.chartOptions,
             });
-        } else {
-            this.chartObject.update();
         }
+
+        if (callback) {
+            callback();
+        }
+    },
+
+    destroy: function () {
+        this.chartObject.destroy();
+        this.chartObject = null;
+        this.data = null;
+        this.chartOptions = null;
+
+        this.elements.graph.remove();
+        this.elements.labels.remove();
     },
 
     getColorsFromCss: function () {
         this.settings.lineColors = [];
-            for (var k = 1; k < 11; k++) {    
-            for (var i = 0; i < document.styleSheets.length; i++) {
-                var mysheet = document.styleSheets[i];
-                var myrules = mysheet.cssRules ? mysheet.cssRules : mysheet.rules;
+            for (let k = 1; k < 11; k++) {    
+            for (let i = 0; i < document.styleSheets.length; i++) {
+                let mysheet = document.styleSheets[i];
+                let myrules = mysheet.cssRules ? mysheet.cssRules : mysheet.rules;
         
-                for (var j = 0; j < myrules.length; j++) {
+                for (let j = 0; j < myrules.length; j++) {
                     if (myrules[j].selectorText) {
                         if (myrules[j].selectorText.toLowerCase() === '.ct-marker-' + k) {
                             this.settings.lineColors.push(myrules[j].style['fill']);
@@ -349,14 +359,15 @@ var PropGraph = {
     },
 
     display: function(chars) {
-        let bufferSize = this.buffers.raw.length;
-        this.buffers.raw += chars;
-        if (bufferSize < 1) {
-            this.processCharacters();
-        } else if (bufferSize > 255) {
-            // TODO: throw a warning about a too many characters incoming
+        if (this.data) {
+            let bufferSize = this.buffers.raw.length;
+            this.buffers.raw += chars;
+            if (bufferSize < 1) {
+                this.processCharacters();
+            } else if (bufferSize > 255) {
+                // TODO: throw a warning about a too many characters incoming
+            }
         }
-        
     },
 
     /**
