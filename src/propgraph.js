@@ -58,7 +58,6 @@ let PropGraph = {
     intervalId: null,
 
     setup: function(settings, elem, callback) {
-        let oldChartType = this.chartType;
 
         if (elem) {
             this.elements.container = elem;
@@ -98,7 +97,7 @@ let PropGraph = {
                             labelString: 'Time (seconds)' 
                         },
                     }], 
-                    yAxes: [{ // and your y axis customization as you see fit...
+                    yAxes: [{
                         type: 'linear',
                         display: true,
                         scaleLabel: {
@@ -374,7 +373,7 @@ let PropGraph = {
     * Graph the data represented in the chars parameter
     */
     processCharacters: function() {
-        let dd = new Date();
+        // let dd = new Date();  // See TODO below...
         let t = 0;
         let row = 0;
         while (this.buffers.raw.length > 0) {
@@ -402,7 +401,17 @@ let PropGraph = {
                 if (row > 0 && !this.flags.isAtStart) {
                     if (parseInt(this.buffers.data[row][0]) < parseInt(this.buffers.data[row - 1][1]) - 20000) {
                         this.counters.rollovers += this.settings.FULL_CYCLE_TIME;
-                        console.log(Math.floor(dd.getTime() / 1000 / this.settings.FULL_CYCLE_TIME));
+                        /*
+                        TODO: Optional - while it seems to be working fine right now, the propeller's internal clock
+                        cycles after ~53 seconds.  This means that if the graph is stopped, paused, or doesn't report
+                        within that ~53 seconds, a rollover (which is detected by the incoming clock mark being less than
+                        the previous one), can get mucked up.  If the javascript clock is used to keep track of which
+                        rollover it's on, then it could survive a long delay.  Ideally, some mix of both methods - perhaps one
+                        checking the other, would eb ideal.
+                        The math required to use the Javascript clock is in the console.log below:
+                        */
+
+                        // console.log(Math.floor(dd.getTime() / 1000 / this.settings.FULL_CYCLE_TIME));
                     }
                 }
                 this.flags.isAtStart = false;
@@ -450,10 +459,10 @@ let PropGraph = {
     
                 this.buffers.characters = '';
             } else {
-                if (!this.flags.dataReady) {            // wait for a full set of data to
-                    if (theChar === '\r' || theChar === '\n') {            // come in before graphing, ends up
-                        this.flags.dataReady = true;    // tossing the first point but prevents
-                    }                                   // garbage from mucking up the graph.
+                if (!this.flags.dataReady) {                     // wait for a full set of data to
+                    if (theChar === '\r' || theChar === '\n') {  // come in before graphing, ends up
+                        this.flags.dataReady = true;             // tossing the first point but prevents
+                    }                                            // garbage from mucking up the graph.
                 } else {
                     // make sure it's a number, comma, CR, or LF
                     if ('-0123456789.,\r\n'.indexOf(theChar) > -1) {
