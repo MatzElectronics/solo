@@ -557,7 +557,7 @@ function getCompilerUrl(action) {
     }
 
     // Direct compilation to the cloud compiler service
-    return  window.location.protocol + '//' + window.location.hostname + 'compile/single/prop-c/' + action;
+    return  window.location.protocol + '//' + window.location.hostname + '//solo.parallax.com/compile/single/prop-c/' + action;
 }
 
 
