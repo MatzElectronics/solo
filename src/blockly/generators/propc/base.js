@@ -2314,7 +2314,7 @@ Blockly.Blocks.custom_code_multiple = {
     helpUrl: Blockly.MSG_SYSTEM_HELPURL,
     init: function () {
         this.setTooltip(Blockly.MSG_CUSTOM_CODE_MULTIPLE_TOOLTIP);
-        this.setColour(colorPalette.getColor('system'));
+        this.setColour('F00'); //(colorPalette.getColor('system'));
         this.appendDummyInput('BLOCK_LABEL')
                 .appendField(new Blockly.FieldCheckbox('FALSE', function (showFields) {
                     this.sourceBlock_.updateShape_(showFields, true);

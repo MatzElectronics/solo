@@ -369,7 +369,10 @@ Blockly.Blocks.base_freqout = {
                 .appendRange('R,0,40000000,0')
                 .appendField("frequency (Hz)")
                 .setCheck('Number');
+        // Align inputs vertically - solo #313
+        // Reverting solo 313 per SL.
         this.setInputsInline(true);
+
         this.setPreviousStatement(true, "Block");
         this.setNextStatement(true, null);
     },
@@ -1274,8 +1277,11 @@ Blockly.Blocks.sound_play = {
     setSoundAction: function (action) {
         var valueBlock = null;
         if (action !== this.getFieldValue('ACTION')) {
-            if (this.getInput('VALUE')) {
-                valueBlock = this.getInput('VALUE').connection.targetBlock();
+            var targetInput = this.getInput('VALUE');
+            if (targetInput) {
+                if (targetInput.connection) {
+                    valueBlock = targetInput.connection.targetBlock();
+                }
                 this.removeInput('VALUE');
             }
             if (action === 'wave') {
@@ -2489,7 +2495,6 @@ Blockly.propc.activitybot_display_calibration = function () {
     var servo = '';
 
     Blockly.propc.definitions_["activitybot_calibrate"] = servo + '#include ' + bot;
-    Blockly.propc.serial_terminal_ = true;
 
     if (bot === 'abdrive.h') {
         if (this.getFieldValue('TYPE') === 'table') {

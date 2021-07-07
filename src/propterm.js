@@ -26,6 +26,7 @@
  * @author Matthew Matz matt.m.matz@gmail.com
  * @function PropTerm
  */
+// eslint-disable-next-line no-unused-vars
 class PropTerm {
     /**
      * @param {HTMLElement} terminalElement HTML element to populate the terminal into.
@@ -334,17 +335,14 @@ class PropTerm {
                 this.buffer.textArray[this.cursor.y] = '';
         }
     
-        if (this.cursor.x < 0) {
+        if (this.cursor.x < 0 && this.cursor.y > 0) {
             this.cursor.y--;
             this.cursor.x = this.buffer.textArray[this.cursor.y].length;
             if (this.cursor.x > this.size.charactersWide - 1) {
                 this.cursor.x = this.size.charactersWide - 1;
                 this.buffer.textArray[this.cursor.y] = this.buffer.textArray[this.cursor.y].substr(0, this.cursor.x);
             }
-        }
-    
-        if (this.cursor.y < 0) {
-            this.cursor.y = 0;
+        } else if (this.cursor.x < 0) {
             this.cursor.x = 0;
         }
     
@@ -707,6 +705,7 @@ class PropTerm {
 /**
  * Terminal options for the PropTerm class
  */
+// eslint-disable-next-line no-unused-vars
 class TerminalOptions {
     /**
      * @param {boolean} echoKeys optional- if set to true, echo keys typed into the terminal.  Default is true.
